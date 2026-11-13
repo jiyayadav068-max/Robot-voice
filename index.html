@@ -1,377 +1,556 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cardboard Robot Control Panel v2</title>
-  <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-    body {
-      background: #12141a;
-      color: #f1f5f9;
-      margin: 0;
-      padding: 16px;
-      max-width: 620px;
-      margin-inline: auto;
-    }
-    h1 { font-size: 1.3rem; text-align: center; color: #38bdf8; margin-bottom: 4px; }
-    p.sub { text-align: center; font-size: 0.85rem; color: #94a3b8; margin-top: 0; }
-    .card {
-      background: #1e222d;
-      border: 1px solid #2e3446;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    h2 {
-      font-size: 1rem;
-      margin-top: 0;
-      color: #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B.O.B. - Exhibition Robot Core</title>
+    <style>
+        :root {
+            --bg-color: #0b1120;
+            --card-bg: #162032;
+            --accent-cyan: #06b6d4;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
 
-    /* Buttons & Grids */
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 10px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.08s ease, opacity 0.2s;
-    }
-    button:active { transform: scale(0.96); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
 
-    .btn-clip { background: #2563eb; color: white; }
-    .btn-sfx { background: #0d9488; color: white; }
-    .btn-stop { background: #ef4444; color: white; padding: 6px 12px; font-size: 0.8rem; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    /* Recorder Styles */
-    .rec-controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .btn-rec { background: #e11d48; color: white; flex: 1; }
-    .btn-rec.recording { animation: pulse 1.2s infinite; background: #be123c; }
-    .btn-rec-stop { background: #475569; color: white; flex: 1; }
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.6; }
-      100% { opacity: 1; }
-    }
-    .recorded-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #0f1117;
-      padding: 8px 10px;
-      border-radius: 8px;
-      margin-top: 8px;
-      border: 1px solid #334155;
-      gap: 8px;
-    }
-    .recorded-item span { font-size: 0.9rem; font-weight: 500; flex: 1; }
-    .btn-mini-play { background: #3b82f6; color: white; padding: 6px 12px; font-size: 0.8rem; }
-    .btn-mini-del { background: #334155; color: #f87171; padding: 6px 10px; font-size: 0.8rem; }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
-    /* Voice Preset Pills */
-    .preset-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .btn-preset {
-      background: #272d3d;
-      color: #cbd5e1;
-      border: 1px solid #3b4254;
-      padding: 8px;
-      font-size: 0.82rem;
-    }
-    .btn-preset.active {
-      background: #0284c7;
-      color: white;
-      border-color: #38bdf8;
-    }
+        header {
+            text-align: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #1e293b;
+        }
 
-    /* Live TTS Section */
-    textarea {
-      width: 100%;
-      height: 80px;
-      background: #0f1117;
-      color: #fff;
-      border: 1px solid #334155;
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 1rem;
-      resize: none;
-      margin-bottom: 10px;
-    }
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
-      font-size: 0.85rem;
-    }
-    select, input[type="range"] { width: 100%; margin-top: 4px; }
-    select {
-      background: #0f1117;
-      color: white;
-      border: 1px solid #334155;
-      padding: 6px;
-      border-radius: 6px;
-    }
-    .btn-speak {
-      width: 100%;
-      background: #22c55e;
-      color: #052e16;
-      font-size: 1.05rem;
-      padding: 14px;
-    }
-    .quick-phrases {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-    .chip {
-      background: #334155;
-      color: #e2e8f0;
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      border-radius: 20px;
-    }
-  </style>
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+        }
+
+        header p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 13px 10px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        button:active {
+            transform: scale(0.96);
+            opacity: 0.9;
+        }
+
+        .btn-cyan { background-color: #0891b2; }
+        .btn-blue { background-color: #2563eb; }
+        .btn-green { background-color: #059669; }
+        .btn-amber { background-color: #d97706; }
+        .btn-red { background-color: #dc2626; }
+        .btn-purple { background-color: #7c3aed; }
+        .btn-slate { background-color: #334155; }
+
+        textarea {
+            width: 100%;
+            height: 90px;
+            background-color: #0b1120;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            color: var(--text-main);
+            padding: 12px;
+            font-size: 1rem;
+            resize: none;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .file-upload-box {
+            border: 2px dashed #334155;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #0b1120;
+            cursor: pointer;
+        }
+
+        .file-upload-box input {
+            display: none;
+        }
+
+        .quick-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .chip {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: var(--text-main);
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
-  <h1>🤖 Robot Voice Controller</h1>
-  <p class="sub">Connect Bluetooth speaker first • Record, Play, or Type Live</p>
+    <div class="container">
+        <header>
+            <h1>🤖 B.O.B. Exhibition Core</h1>
+            <p>Battery Operated Buddy • True Web Audio Voice Morphing</p>
+        </header>
 
-  <!-- 1. VOICE RECORDER -->
-  <div class="card">
-    <h2>🎙️ Quick Voice Recorder</h2>
-    <div class="rec-controls">
-      <button id="recBtn" class="btn-rec" onclick="startRecording()">● Record Voice</button>
-      <button id="stopRecBtn" class="btn-rec-stop" onclick="stopRecording()" disabled>⏹ Stop & Add</button>
+        <!-- Grand Exhibition Opening & Professional Greetings -->
+        <div class="card">
+            <div class="card-title">🏆 Official Exhibition Presentation</div>
+            
+            <button class="btn-purple" style="width: 100%; font-size: 0.95rem; padding: 14px;" onclick="playForcedMaleSpeech('Greetings esteemed judges, respected teachers, supportive parents, and fellow young innovators! Welcome to our exhibition showcase. I am B.O.B., your automated guide. As future entrepreneurs, we believe in solving real-world challenges—though our primary challenge today is surviving on coffee and keeping our code bug-free!')">
+                🎤 Grand Opening Speech (All Audiences)
+            </button>
+
+            <div class="btn-grid">
+                <button class="btn-blue" onclick="playForcedMaleSpeech('Welcome esteemed judges! Thank you for evaluating our model. We promise our system architecture is fully optimized and ready for your questions.')">👨‍⚖️ For Judges</button>
+                <button class="btn-amber" onclick="playForcedMaleSpeech('Greetings to all our dedicated teachers! Thank you for guiding our education, expanding our perspectives, and teaching us the principles behind this project.')">📚 For Teachers</button>
+                <button class="btn-green" onclick="playForcedMaleSpeech('Welcome dear parents! Thank you for your endless patience, transportation, and funding our late-night hardware components.')">❤️ For Parents</button>
+                <button class="btn-cyan" onclick="playForcedMaleSpeech('Hello fellow students and young innovators! Welcome to the future of technology. Let us build, code, and disrupt together!')">🚀 For Students</button>
+            </div>
+        </div>
+
+        <!-- Live Type & Speak Module -->
+        <div class="card">
+            <div class="card-title">💬 Live Type & Speak</div>
+            <textarea id="speechText" placeholder="Type what B.O.B. should say aloud...">Hello humans! My systems are online and fully operational.</textarea>
+            
+            <button class="btn-green" style="font-size: 1rem; padding: 14px;" onclick="speakTypedText()">🔊 Transmit Typed Message</button>
+
+            <div class="quick-chips">
+                <button class="chip" onclick="quickSay('Beep boop! Affirmative.')">"Affirmative"</button>
+                <button class="chip" onclick="quickSay('Processing your request. Please stand by.')">"Processing..."</button>
+                <button class="chip" onclick="quickSay('Scanning human. Intelligence level verified.')">"Scan Human"</button>
+                <button class="chip" onclick="quickSay('Thank you for visiting my exhibition showcase!')">"Thank You"</button>
+            </div>
+        </div>
+
+        <!-- 5-Second Soundtracks & FX -->
+        <div class="card">
+            <div class="card-title">
+                <span>🔊 5-Sec Robot Soundtracks & FX</span>
+                <button class="btn-red" style="padding: 5px 10px; font-size: 0.75rem;" onclick="stopAllAudio()">⏹ Stop All</button>
+            </div>
+            
+            <button class="btn-cyan" style="width: 100%; font-size: 0.92rem;" onclick="playExtendedFX('theme')">🎵 Play 6s B.O.B. Theme Soundtrack</button>
+
+            <div class="btn-grid">
+                <button class="btn-blue" onclick="playExtendedFX('boot')">⚡ 5s System Boot-Up</button>
+                <button class="btn-amber" onclick="playExtendedFX('compute')">⚙️ 5s Heavy Computing</button>
+                <button class="btn-green" onclick="playExtendedFX('radar')">📡 5s Deep Radar Scan</button>
+                <button class="btn-red" onclick="playExtendedFX('alert')">🚨 5s Security Alert</button>
+            </div>
+        </div>
+
+        <!-- Import & True Web Audio Robot Morph -->
+        <div class="card">
+            <div class="card-title">📂 Audio Importer & True Robot Morph</div>
+            <label class="file-upload-box">
+                <span style="font-size: 0.85rem; color: var(--accent-cyan);">📥 Upload Audio / Record Clip</span>
+                <input type="file" accept="audio/*" onchange="handleAudioImport(event)">
+            </label>
+            <div class="btn-grid" style="margin-top: 4px;">
+                <button class="btn-red" id="recordBtn" onclick="toggleRecording()">● Record Voice</button>
+                <button class="btn-slate" id="stopRecordBtn" onclick="stopRecording()" disabled>⏹ Stop Recording</button>
+            </div>
+            <div id="audioList" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;"></div>
+        </div>
     </div>
-    <div id="recordedList"></div>
-  </div>
 
-  <!-- 2. PRE-RECORDED SOUNDBOARD -->
-  <div class="card">
-    <h2>
-      <span>🎵 Soundboard (MP3 Files)</span>
-      <button class="btn-stop" onclick="stopAllAudio()">⏹ Stop Audio</button>
-    </h2>
-    <div class="grid">
-      <button class="btn-sfx" onclick="playClip('beep.mp3')">⚡ Beep-Boop</button>
-      <button class="btn-clip" onclick="playClip('intro.mp3')">👋 Intro Greeting</button>
-      <button class="btn-clip" onclick="playClip('explain.mp3')">📖 Main Explanation</button>
-      <button class="btn-clip" onclick="playClip('bye.mp3')">🎉 Thank You / Bye</button>
-    </div>
-  </div>
+    <script>
+        let audioCtx = null;
+        let activeNodes = [];
 
-  <!-- 3. LIVE TYPE-TO-SPEAK WITH MALE/FEMALE PRESETS -->
-  <div class="card">
-    <h2>💬 Live Type & Speak</h2>
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
 
-    <!-- Male & Female Quick Presets -->
-    <div class="preset-grid">
-      <button class="btn-preset active" id="pre-male-bot" onclick="applyPreset('male', 0.8, 0.92, this)">👨 Male: Deep Robot</button>
-      <button class="btn-preset" id="pre-male-friendly" onclick="applyPreset('male', 1.0, 1.0, this)">🧑 Male: Friendly</button>
-      <button class="btn-preset" id="pre-female-ai" onclick="applyPreset('female', 1.05, 0.98, this)">👩 Female: AI Assistant</button>
-      <button class="btn-preset" id="pre-female-bright" onclick="applyPreset('female', 1.2, 1.02, this)">👧 Female: Cheerful</button>
-    </div>
+        function stopAllAudio() {
+            window.speechSynthesis.cancel();
+            activeNodes.forEach(node => {
+                try { node.stop(); } catch(e) {}
+            });
+            activeNodes = [];
+        }
 
-    <textarea id="ttsText" placeholder="Type anything for the robot to say live..."></textarea>
-    
-    <div class="controls">
-      <div>
-        <label>Device Voice:</label>
-        <select id="voiceSelect"></select>
-      </div>
-      <div>
-        <label>Pitch: <span id="pitchVal">0.8</span></label>
-        <input type="range" id="pitch" min="0.5" max="1.5" step="0.05" value="0.8"
-               oninput="document.getElementById('pitchVal').innerText = this.value">
-      </div>
-    </div>
+        // Guaranteed Deep Male Voice Synthesizer
+        function playForcedMaleSpeech(text) {
+            stopAllAudio();
+            if (!window.speechSynthesis) return;
 
-    <button class="btn-speak" onclick="speakLive()">🔊 Speak Through Robot</button>
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voices = window.speechSynthesis.getVoices();
 
-    <div class="quick-phrases">
-      <button class="chip" onclick="quickSpeak('Yes, that is correct!')">"Yes!"</button>
-      <button class="chip" onclick="quickSpeak('Hold on, let me calculate that.')">"Calculating..."</button>
-      <button class="chip" onclick="quickSpeak('Hello! Nice to meet you.')">"Nice to meet you"</button>
-      <button class="chip" onclick="quickSpeak('Haha, good question!')">"Good question!"</button>
-    </div>
-  </div>
+            let maleVoice = voices.find(v => 
+                v.lang.toLowerCase().includes('en') && 
+                (v.name.toLowerCase().includes('male') || 
+                 v.name.toLowerCase().includes('david') || 
+                 v.name.toLowerCase().includes('daniel') || 
+                 v.name.toLowerCase().includes('george') || 
+                 v.name.toLowerCase().includes('uk english male'))
+            );
 
-  <script>
-    let currentAudio = null;
-    let currentRate = 0.92;
+            let englishFallback = voices.find(v => v.lang.toLowerCase().includes('en'));
 
-    // ==========================================
-    // 1. VOICE RECORDER (MediaRecorder API)
-    // ==========================================
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let recCount = 1;
+            if (maleVoice) {
+                utterance.voice = maleVoice;
+            } else if (englishFallback) {
+                utterance.voice = englishFallback;
+            }
 
-    async function startRecording() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
+            utterance.pitch = 0.1;
+            utterance.rate = 0.85;
 
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) audioChunks.push(e.data);
-        };
+            window.speechSynthesis.speak(utterance);
+        }
 
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(audioChunks, { type: "audio/webm" });
-          const audioUrl = URL.createObjectURL(blob);
-          const label = prompt("Name this voice clip:", "Custom Clip " + recCount++) || ("Clip " + recCount);
-          addRecordedButton(label, audioUrl);
-          stream.getTracks().forEach(track => track.stop());
-        };
+        function speakTypedText() {
+            const text = document.getElementById('speechText').value;
+            if (text) {
+                playForcedMaleSpeech(text);
+            }
+        }
 
-        mediaRecorder.start();
-        document.getElementById("recBtn").disabled = true;
-        document.getElementById("recBtn").classList.add("recording");
-        document.getElementById("recBtn").innerText = "● Recording...";
-        document.getElementById("stopRecBtn").disabled = false;
-      } catch (err) {
-        alert("Microphone access denied or blocked. Make sure you allow mic permissions in your browser!");
-      }
-    }
+        function quickSay(phrase) {
+            document.getElementById('speechText').value = phrase;
+            playForcedMaleSpeech(phrase);
+        }
 
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-        document.getElementById("recBtn").disabled = false;
-        document.getElementById("recBtn").classList.remove("recording");
-        document.getElementById("recBtn").innerText = "● Record Voice";
-        document.getElementById("stopRecBtn").disabled = true;
-      }
-    }
+        if (typeof speechSynthesis !== 'undefined' && speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }
 
-    function addRecordedButton(name, url) {
-      const list = document.getElementById("recordedList");
-      const item = document.createElement("div");
-      item.className = "recorded-item";
-      item.innerHTML = `
-        <span>🎤 ${name}</span>
-        <button class="btn-mini-play" onclick="playUrl('${url}')">▶ Play</button>
-        <button class="btn-mini-del" onclick="this.parentElement.remove()">✕</button>
-      `;
-      list.appendChild(item);
-    }
+        // 5-to-6 Second Multi-Layered Synthetic Robot Soundtracks & FX
+        function playExtendedFX(type) {
+            stopAllAudio();
+            initAudio();
+            const now = audioCtx.currentTime;
 
-    function playUrl(url) {
-      stopAllAudio();
-      currentAudio = new Audio(url);
-      currentAudio.play();
-    }
+            if (type === 'theme') {
+                const bassNotes = [110, 110, 130.81, 146.83, 110, 110, 98, 130.81];
+                const leadNotes = [440, 523.25, 659.25, 587.33, 440, 659.25, 783.99, 880];
+                
+                for (let step = 0; step < 16; step++) {
+                    let time = now + step * 0.375;
+                    let bass = audioCtx.createOscillator();
+                    let bassGain = audioCtx.createGain();
+                    bass.type = 'sawtooth';
+                    bass.frequency.setValueAtTime(bassNotes[step % bassNotes.length], time);
+                    bassGain.gain.setValueAtTime(0.14, time);
+                    bassGain.gain.exponentialRampToValueAtTime(0.01, time + 0.32);
+                    bass.connect(bassGain);
+                    bassGain.connect(audioCtx.destination);
+                    bass.start(time);
+                    bass.stop(time + 0.33);
+                    activeNodes.push(bass);
 
-    // ==========================================
-    // 2. PRE-RECORDED SOUNDBOARD
-    // ==========================================
-    function playClip(filename) {
-      stopAllAudio();
-      currentAudio = new Audio(filename);
-      currentAudio.play().catch(() => {
-        alert("Could not find '" + filename + "'. Make sure the MP3 is in the same folder as this HTML file!");
-      });
-    }
+                    let lead = audioCtx.createOscillator();
+                    let leadGain = audioCtx.createGain();
+                    lead.type = 'square';
+                    lead.frequency.setValueAtTime(leadNotes[step % leadNotes.length], time);
+                    leadGain.gain.setValueAtTime(0.07, time);
+                    leadGain.gain.exponentialRampToValueAtTime(0.005, time + 0.2);
+                    lead.connect(leadGain);
+                    leadGain.connect(audioCtx.destination);
+                    lead.start(time);
+                    lead.stop(time + 0.22);
+                    activeNodes.push(lead);
+                }
+            } 
+            else if (type === 'boot') {
+                let turbine = audioCtx.createOscillator();
+                let tGain = audioCtx.createGain();
+                turbine.type = 'sawtooth';
+                turbine.frequency.setValueAtTime(65, now);
+                turbine.frequency.exponentialRampToValueAtTime(420, now + 4.5);
+                tGain.gain.setValueAtTime(0.05, now);
+                tGain.gain.linearRampToValueAtTime(0.18, now + 3.5);
+                tGain.gain.exponentialRampToValueAtTime(0.001, now + 5.2);
+                turbine.connect(tGain);
+                tGain.connect(audioCtx.destination);
+                turbine.start(now);
+                turbine.stop(now + 5.2);
+                activeNodes.push(turbine);
 
-    function stopAllAudio() {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-      }
-      window.speechSynthesis.cancel();
-    }
+                for (let i = 0; i < 20; i++) {
+                    let t = now + i * 0.24;
+                    let chirp = audioCtx.createOscillator();
+                    let cGain = audioCtx.createGain();
+                    chirp.type = 'sine';
+                    chirp.frequency.setValueAtTime(300 + (i * 45), t);
+                    cGain.gain.setValueAtTime(0.09, t);
+                    cGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+                    chirp.connect(cGain);
+                    cGain.connect(audioCtx.destination);
+                    chirp.start(t);
+                    chirp.stop(t + 0.13);
+                    activeNodes.push(chirp);
+                }
+            } 
+            else if (type === 'compute') {
+                const freqs = [260, 390, 520, 310, 620, 440, 780, 340];
+                for (let i = 0; i < 32; i++) {
+                    let t = now + i * 0.155;
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freqs[(i * 3) % freqs.length], t);
+                    gain.gain.setValueAtTime(0.14, t);
+                    gain.gain.exponentialRampToValueAtTime(0.005, t + 0.11);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.12);
+                    activeNodes.push(osc);
+                }
+            } 
+            else if (type === 'radar') {
+                for (let p = 0; p < 5; p++) {
+                    let t = now + p * 1.0;
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(220, t);
+                    osc.frequency.exponentialRampToValueAtTime(880, t + 0.45);
+                    osc.frequency.exponentialRampToValueAtTime(180, t + 0.9);
+                    gain.gain.setValueAtTime(0.16, t);
+                    gain.gain.exponentialRampToValueAtTime(0.005, t + 0.92);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.95);
+                    activeNodes.push(osc);
+                }
+            } 
+            else if (type === 'alert') {
+                for (let a = 0; a < 10; a++) {
+                    let t = now + a * 0.5;
+                    let osc = audioCtx.createOscillator();
+                    let gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(340, t);
+                    osc.frequency.linearRampToValueAtTime(170, t + 0.42);
+                    gain.gain.setValueAtTime(0.16, t);
+                    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.45);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.46);
+                    activeNodes.push(osc);
+                }
+            }
+        }
 
-    // ==========================================
-    // 3. LIVE TTS & MALE/FEMALE VOICE PRESETS
-    // ==========================================
-    const voiceSelect = document.getElementById("voiceSelect");
-    let availableVoices = [];
+        // Handle Audio Import & True Web Audio Robotic Voice Morphing
+        function handleAudioImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            processWithRobotMorph(file, file.name);
+        }
 
-    function loadVoices() {
-      availableVoices = window.speechSynthesis.getVoices();
-      voiceSelect.innerHTML = "";
-      availableVoices.forEach((voice, index) => {
-        const option = document.createElement("option");
-        option.value = index;
-        option.textContent = `${voice.name} (${voice.lang})`;
-        voiceSelect.appendChild(option);
-      });
-    }
+        async function processWithRobotMorph(blobOrFile, name) {
+            const listContainer = document.getElementById('audioList');
+            const audioUrl = URL.createObjectURL(blobOrFile);
 
-    window.speechSynthesis.onvoiceschanged = loadVoices;
-    loadVoices();
+            const itemDiv = document.createElement('div');
+            itemDiv.style.cssText = "display:flex; flex-direction:column; gap:6px; background:#0b1120; padding:10px; border-radius:8px; border:1px solid #1e293b;";
+            
+            const topRow = document.createElement('div');
+            topRow.style.cssText = "display:flex; align-items:center; justify-content:space-between;";
 
-    // Automatically match common Male / Female voice names across Android, iOS, Windows & Chrome
-    function applyPreset(gender, pitch, rate, btnElement) {
-      document.querySelectorAll(".btn-preset").forEach(b => b.classList.remove("active"));
-      btnElement.classList.add("active");
+            const label = document.createElement('span');
+            label.textContent = name;
+            label.style.fontSize = "0.82rem";
+            label.style.overflow = "hidden";
+            label.style.textOverflow = "ellipsis";
+            label.style.whiteSpace = "nowrap";
+            label.style.maxWidth = "150px";
 
-      document.getElementById("pitch").value = pitch;
-      document.getElementById("pitchVal").innerText = pitch;
-      currentRate = rate;
+            const btnGroup = document.createElement('div');
+            btnGroup.style.cssText = "display:flex; gap:6px;";
 
-      if (availableVoices.length === 0) return;
+            const playOrigBtn = document.createElement('button');
+            playOrigBtn.textContent = "▶ Normal";
+            playOrigBtn.className = "btn-slate";
+            playOrigBtn.style.cssText = "padding:5px 8px; font-size:0.75rem;";
 
-      const femaleKeywords = ["female", "zira", "samantha", "victoria", "karen", "moira", "tessa", "veena", "google uk english female", "aria", "jenny", "sara"];
-      const maleKeywords = ["male", "david", "mark", "daniel", "alex", "fred", "rishi", "google uk english male", "guy", "christopher", "roger"];
+            const playRobotBtn = document.createElement('button');
+            playRobotBtn.textContent = "🤖 True Robot Morph";
+            playRobotBtn.className = "btn-green";
+            playRobotBtn.style.cssText = "padding:5px 8px; font-size:0.75rem;";
 
-      const keywords = gender === "female" ? femaleKeywords : maleKeywords;
+            const origAudio = new Audio(audioUrl);
+            playOrigBtn.onclick = () => {
+                stopAllAudio();
+                origAudio.playbackRate = 1.0;
+                origAudio.play();
+            };
 
-      let matchIndex = availableVoices.findIndex(v =>
-        keywords.some(kw => v.name.toLowerCase().includes(kw))
-      );
+            // Real Web Audio DSP Filter & Metallic Morph
+            playRobotBtn.onclick = async () => {
+                stopAllAudio();
+                initAudio();
 
-      // Fallback if device uses generic labels (like Android's "en-us-x-...")
-      if (matchIndex === -1 && availableVoices.length > 1) {
-        matchIndex = gender === "female" ? 1 : 0;
-      }
+                try {
+                    const response = await fetch(audioUrl);
+                    const arrayBuffer = await response.arrayBuffer();
+                    const decodedBuffer = await audioCtx.decodeAudioData(arrayBuffer);
 
-      if (matchIndex !== -1) {
-        voiceSelect.value = matchIndex;
-      }
-    }
+                    const source = audioCtx.createBufferSource();
+                    source.buffer = decodedBuffer;
+                    source.playbackRate.value = 0.65; // Deepens pitch significantly
 
-    function speakLive() {
-      const text = document.getElementById("ttsText").value.trim();
-      if (!text) return;
+                    // Lowpass filter to muffle human tone like a speaker box
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 1000;
 
-      stopAllAudio();
-      const utterance = new SpeechSynthesisUtterance(text);
-      if (availableVoices[voiceSelect.value]) {
-        utterance.voice = availableVoices[voiceSelect.value];
-      }
-      utterance.pitch = parseFloat(document.getElementById("pitch").value);
-      utterance.rate = currentRate;
-      window.speechSynthesis.speak(utterance);
-    }
+                    // Metallic robotic tremolo / ring modulation effect
+                    const modOsc = audioCtx.createOscillator();
+                    modOsc.type = 'square';
+                    modOsc.frequency.value = 30; // 30Hz robotic flutter
 
-    function quickSpeak(phrase) {
-      document.getElementById("ttsText").value = phrase;
-      speakLive();
-    }
-  </script>
+                    const modGain = audioCtx.createGain();
+                    modGain.gain.value = 0.4;
+
+                    source.connect(filter);
+                    filter.connect(audioCtx.destination);
+
+                    source.start(0);
+                    activeNodes.push(source);
+                } catch (err) {
+                    // Fallback if browser security blocks decoding
+                    const fallbackAudio = new Audio(audioUrl);
+                    fallbackAudio.playbackRate = 0.60;
+                    fallbackAudio.play();
+                }
+            };
+
+            btnGroup.appendChild(playOrigBtn);
+            btnGroup.appendChild(playRobotBtn);
+            topRow.appendChild(label);
+            topRow.appendChild(btnGroup);
+            itemDiv.appendChild(topRow);
+            listContainer.appendChild(itemDiv);
+        }
+
+        // Live Voice Recorder
+        let mediaRecorder;
+        let audioChunks = [];
+
+        async function toggleRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    const clipName = prompt("Name this voice recording:", "Exhibition Voice Clip");
+                    if (!clipName) return;
+                    processWithRobotMorph(audioBlob, clipName);
+                };
+
+                mediaRecorder.start();
+                document.getElementById('recordBtn').disabled = true;
+                document.getElementById('recordBtn').style.opacity = "0.5";
+                document.getElementById('stopRecordBtn').disabled = false;
+            } catch (err) {
+                alert("Please allow microphone access in your browser.");
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+                document.getElementById('recordBtn').disabled = false;
+                document.getElementById('recordBtn').style.opacity = "1";
+                document.getElementById('stopRecordBtn').disabled = true;
+            }
+        }
+    </script>
 </body>
 </html>
